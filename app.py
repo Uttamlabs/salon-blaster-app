@@ -163,17 +163,20 @@ st.markdown("""
 
 
         /* Clean Drag & Drop Area */
-
         section[data-testid="stFileUploader"] {
-
             border: 2px dashed #000000 !important;
-
             border-radius: 16px !important;
-
             background-color: #fafafa !important;
-
-            padding: 30px !important;
-
+            padding: 20px !important;
+        }
+        
+        /* Fix the overlapping button text */
+        section[data-testid="stFileUploader"] button {
+            padding: 5px 15px !important;
+            width: auto !important;
+            margin: 0 !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
         }
 
        
