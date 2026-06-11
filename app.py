@@ -81,45 +81,23 @@ st.markdown("""
             transform: translateY(-1px);
         }
 
-        /* --- STABLE FILE UPLOADER PATCH --- */
-        /* Targets the main upload area container */
+        /* --- BULLETPROOF FILE UPLOADER PATCH --- */
         section[data-testid="stFileUploader"] {
             border: 2px dashed #000000 !important;
             border-radius: 16px !important;
             background-color: #fafafa !important;
-            padding: 24px !important;
         }
         
-        /* Targets the internal grid structure inside Streamlit's uploader */
-        section[data-testid="stFileUploader"] > div {
-            padding: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 10px !important;
-        }
-
-        /* Forces the "Browse files" button inside the container to look crisp */
+        /* Reset the button so Streamlit's layout engine handles it natively */
         section[data-testid="stFileUploader"] button {
-            background-color: #ffffff !important;
-            color: #000000 !important;
+            all: revert; /* Strips away our global button styles to stop overlap */
             border: 2px solid #000000 !important;
             border-radius: 8px !important;
-            padding: 6px 16px !important;
-            font-size: 0.85rem !important;
-            width: auto !important;
-            display: inline-block !important;
-            margin: 0 auto !important;
-        }
-        
-        /* Removes Streamlit's absolute positioning on the text label to prevent overlap */
-        section[data-testid="stFileUploader"] label {
-            position: relative !important;
-            display: block !important;
-            text-align: center !important;
-            margin: 0 !important;
-            padding: 0 !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            padding: 4px 12px !important;
+            cursor: pointer !important;
         }
         /* ---------------------------------- */
 
