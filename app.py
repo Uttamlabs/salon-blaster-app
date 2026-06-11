@@ -304,13 +304,14 @@ if uploaded_file is not None:
                     "type": "template",
 
                     "template": {
-
                         "name": template_name,
-
                         "language": {"code": "en_US"},
-
-                        "components": []
-
+                        "components": [
+                            {
+                                "type": "body",
+                                "parameters": [{"type": "text", "text": customer_name}]
+                            }
+                        ]
                     }
 
                 }
@@ -324,8 +325,11 @@ if uploaded_file is not None:
                     success_count += 1
 
                 else:
-
-                    st.toast(f"Failed: {customer_name}", icon="❌")
+                    try:
+                        error_details = response.json().get('error', {}).get('message', 'Unknown Error')
+                    except:
+                        error_details = response.text
+                    st.error(f"❌ Failed sending to {customer_name}. Meta Error: {error_details}")
 
                
 
