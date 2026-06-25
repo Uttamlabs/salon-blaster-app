@@ -122,7 +122,7 @@ st.markdown('<div class="main-title">wa.blaster</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">simple, zero-subscription bulk utility</div>', unsafe_allow_html=True)
 
 # Configuration Field (Centered and clean)
-template_name = st.text_input("template id", value="hello_world")
+template_name = st.text_input("template id", value="invite_go") # Updated default to invite_go
 
 st.space = st.markdown("<br>", unsafe_allow_html=True)
 
@@ -158,6 +158,7 @@ if uploaded_file is not None:
                 customer_name = str(row['Name'])
                 phone_number = str(row['Phone'])
                 
+                # UPDATED PAYLOAD: Injects the customer's name into the {{1}} template variable
                 payload = {
                     "messaging_product": "whatsapp",
                     "to": phone_number,
@@ -165,7 +166,17 @@ if uploaded_file is not None:
                     "template": {
                         "name": template_name,
                         "language": {"code": "en_US"},
-                        "components": []
+                        "components": [
+                            {
+                                "type": "body",
+                                "parameters": [
+                                    {
+                                        "type": "text",
+                                        "text": customer_name
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 }
                 
