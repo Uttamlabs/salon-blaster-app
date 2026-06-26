@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import time
+import streamlit.components.v1 as components
 
 # =========================================================================
 # ⚠️ META CREDENTIALS
@@ -90,7 +91,7 @@ st.markdown("""
         
         /* Reset the button so Streamlit's layout engine handles it natively */
         section[data-testid="stFileUploader"] button {
-            all: revert; /* Strips away our global button styles to stop overlap */
+            all: revert; 
             border: 2px solid #000000 !important;
             border-radius: 8px !important;
             background-color: #ffffff !important;
@@ -127,10 +128,146 @@ st.markdown('<div class="main-title">wa.blaster</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">simple, zero-subscription bulk utility</div>', unsafe_allow_html=True)
 
 # Configuration Field (Centered and clean)
-template_name = st.text_input("template id", value="salon_test_msg") # Updated default
+template_name = st.text_input("template id", value="salon_test_msg")
 
 st.space = st.markdown("<br>", unsafe_allow_html=True)
 
+# --- MOBILE CONTACT EXPORTER WIDGET ---
+st.write("📱 **mobile contact extractor**")
+exporter_html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            background-color: transparent;
+            color: #000000;
+            text-align: center;
+            padding: 10px;
+        }
+        .card {
+            background: #fafafa;
+            padding: 20px;
+            border: 2px dashed #000000;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        h2 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        p {
+            font-size: 0.85rem;
+            color: #666666;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 9999px;
+            cursor: pointer;
+            width: auto;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background-color: #ffffff;
+            color: #000000;
+            transform: translateY(-1px);
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>generate csv from phone</h2>
+        <p>tap below to select contacts and download a formatted list.</p>
+        <button id="selectContactsBtn">extract contacts</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('selectContactsBtn');
+        const statusDiv = document.getElementById('status');
+
+        function formatTo91(number) {
+            let cleanNum = number.replace(/\D/g, '');
+            if (cleanNum.length === 10) return '91' + cleanNum;
+            if (cleanNum.length === 11 && cleanNum.startsWith('0')) return '91' + cleanNum.substring(1);
+            if (cleanNum.length === 12 && cleanNum.startsWith('91')) return cleanNum;
+            return cleanNum;
+        }
+
+        btn.addEventListener('click', async () => {
+            if (!('contacts' in navigator && 'ContactsManager' in window)) {
+                statusDiv.innerHTML = '<span style="color:#d32f2f;">Your browser does not support the Contact Picker. Use Chrome on Android.</span>';
+                return;
+            }
+            try {
+                const props = ['name', 'tel'];
+                const opts = { multiple: true };
+                const contacts = await navigator.contacts.select(props, opts);
+                
+                if (!contacts.length) {
+                    statusDiv.innerText = "No contacts selected.";
+                    return;
+                }
+
+                statusDiv.innerText = `Processing ${contacts.length} contacts...`;
+
+                // MATCHED WITH PYTHON CODE: Header must be 'Phone', not 'Number'
+                let csvContent = "Name,Phone\\n";
+
+                contacts.forEach(contact => {
+                    const name = contact.name ? contact.name[0] : 'Unknown';
+                    if (contact.tel && contact.tel.length > 0) {
+                        contact.tel.forEach(phone => {
+                            const formattedNum = formatTo91(phone);
+                            csvContent += `"${name}",${formattedNum}\\n`;
+                        });
+                    }
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", "blaster_contacts.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                statusDiv.innerHTML = `<span style="color:#2e7d32;">✅ Extracted ${contacts.length} contacts! Ready to upload.</span>`;
+            } catch (error) {
+                statusDiv.innerHTML = `<span style="color:#d32f2f;">Error: ${error.message}</span>`;
+            }
+        });
+    </script>
+</body>
+</html>
+"""
+components.html(exporter_html, height=220)
+
+st.space = st.markdown("<br>", unsafe_allow_html=True)
+st.write("📤 **upload & fire**")
 # Drag and drop area
 uploaded_file = st.file_uploader("", type=['csv'])
 
