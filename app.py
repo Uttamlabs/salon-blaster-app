@@ -185,26 +185,3 @@ if uploaded_file is not None:
                 
             st.toast(f"Successfully sent {success_count} messages!", icon="🚀")
             st.success(f"done. {success_count} messages delivered.")
-
-# --- ONE-TIME ACTIVATION UTILITY ---
-st.markdown("---")
-st.write("🛠️ **admin setup (run once)**")
-pin = st.text_input("verification pin (6 digits)", value="123456")
-
-if st.button("register phone number with meta"):
-    register_url = f"https://graph.facebook.com/v19.0/{MY_PHONE_NUMBER_ID}/register"
-    register_headers = {
-        "Authorization": f"Bearer {MY_ACCESS_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    register_payload = {
-        "messaging_product": "whatsapp",
-        "pin": pin
-    }
-    
-    reg_response = requests.post(register_url, headers=register_headers, json=register_payload)
-    
-    if reg_response.status_code == 200 or reg_response.json().get('success'):
-        st.success("✅ Number successfully registered! You can now send blasts.")
-    else:
-        st.error(f"❌ Registration Failed: {reg_response.text}")
