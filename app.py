@@ -99,6 +99,11 @@ st.markdown("""
             padding: 4px 12px !important;
             cursor: pointer !important;
         }
+
+        /* Hide the broken Material Icon text in the uploader button */
+        span[data-testid="stIconMaterial"] {
+            display: none !important;
+        }
         /* ---------------------------------- */
 
         /* Hide default streamlit branding clutter */
