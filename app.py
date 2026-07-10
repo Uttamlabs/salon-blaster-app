@@ -160,8 +160,9 @@ st.markdown(f"""
 
 st.space = st.markdown("<br>", unsafe_allow_html=True)
 st.write("📤 **upload & fire**")
-# Drag and drop area
-uploaded_file = st.file_uploader("", type=['csv'])
+
+# FIX 1: Added a collapsed label to fix the Streamlit warning
+uploaded_file = st.file_uploader("Upload Contacts CSV", type=['csv'], label_visibility="collapsed")
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
@@ -186,13 +187,18 @@ if uploaded_file is not None:
             }
             
             progress_bar = st.progress(0)
+            
+            # FIX 3: Initialized tracking variables
             success_count = 0
+            failed_count = 0
+            failed_numbers = []
             
             for index, row in df.iterrows():
                 customer_name = str(row['Name'])
-                phone_number = str(row['Phone'])
                 
-                # UPDATED PAYLOAD: Uses your active template with NO variables and "en" language
+                # FIX 2: Check if column is named Phone or Number to prevent crashes
+                phone_number = str(row['Phone'] if 'Phone' in df.columns else row['Number'])
+                
                 payload = {
                     "messaging_product": "whatsapp",
                     "to": phone_number,
@@ -208,6 +214,8 @@ if uploaded_file is not None:
                 if response.status_code == 200:
                     success_count += 1
                 else:
+                    failed_count += 1
+                    failed_numbers.append(f"{customer_name} ({phone_number})")
                     try:
                         error_details = response.json().get('error', {}).get('message', 'Unknown Error')
                     except:
@@ -217,5 +225,21 @@ if uploaded_file is not None:
                 progress_bar.progress(int(((index + 1) / len(df)) * 100))
                 time.sleep(0.4)
                 
-            st.toast(f"Successfully sent {success_count} messages!", icon="🚀")
-            st.success(f"done. {success_count} messages delivered.")
+            # --- FINAL SUMMARY BLOCK ---
+            st.markdown("---")
+            st.markdown("### 📊 campaign summary")
+            
+            st.markdown(f"**Total Processed:** `{len(df)}` contacts")
+            st.success(f"✅ **Successful Deliveries:** `{success_count}`")
+            
+            if failed_count > 0:
+                st.error(f"❌ **Total Failures:** `{failed_count}`")
+                
+                # Display failed numbers
+                st.markdown("📋 **Failed Recipients List:**")
+                failed_text = "\n".join(failed_numbers)
+                st.text_area(label="Copy failed numbers from here:", value=failed_text, height=150)
+            else:
+                st.info("🎉 Perfect campaign! Zero failures.")
+                
+            st.toast(f"Blast complete: {success_count} sent, {failed_count} failed", icon="🚀")
