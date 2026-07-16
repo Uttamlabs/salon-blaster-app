@@ -1,0 +1,245 @@
+import streamlit as st
+import pandas as pd
+import requests
+import time
+
+# =========================================================================
+# ⚠️ META CREDENTIALS
+# =========================================================================
+MY_ACCESS_TOKEN = st.secrets["MY_ACCESS_TOKEN"]
+MY_PHONE_NUMBER_ID = st.secrets["MY_PHONE_NUMBER_ID"]
+# =========================================================================
+
+# --- INITIAL APP SETUP ---
+st.set_page_config(page_title="blaster // tools", page_icon="⚡", layout="centered")
+
+# --- COBALT.TOOLS AESTHETIC CSS INJECTION ---
+st.markdown("""
+    <style>
+        /* Import a clean monospaced tech font */
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+        
+        /* Global typography resets */
+        * {
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+        
+        /* Main background and clean text color */
+        .stApp {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        
+        /* Title styling - clean, minimal, no emojis */
+        .main-title {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: -1px;
+            margin-bottom: 5px;
+            text-transform: lowercase;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            text-align: center;
+            color: #666666;
+            margin-bottom: 40px;
+        }
+
+        /* Cobalt Style Inputs & Text boxes */
+        div[data-baseweb="input"] {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+            border-radius: 12px !important;
+        }
+        
+        /* Custom styling for text inputs */
+        .stTextInput input {
+            border: 2px solid #000000 !important;
+            border-radius: 12px !important;
+            padding: 12px !important;
+            color: #000000 !important;
+        }
+
+        /* Pill-shaped, bold outlined buttons exactly like Cobalt */
+        div.stButton > button {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border: 2px solid #000000 !important;
+            border-radius: 9999px !important;
+            padding: 10px 24px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease;
+            width: auto !important;
+            margin: 0 auto !important;
+            display: block !important;
+        }
+        
+        div.stButton > button:hover {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            transform: translateY(-1px);
+        }
+
+        /* --- BULLETPROOF FILE UPLOADER PATCH --- */
+        section[data-testid="stFileUploader"] {
+            border: 2px dashed #000000 !important;
+            border-radius: 16px !important;
+            background-color: #fafafa !important;
+        }
+        
+        /* Reset the button so Streamlit's layout engine handles it natively */
+        section[data-testid="stFileUploader"] button {
+            all: revert; 
+            border: 2px solid #000000 !important;
+            border-radius: 8px !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            padding: 4px 12px !important;
+            cursor: pointer !important;
+        }
+
+        /* Hide the broken Material Icon text in the uploader button */
+        span[data-testid="stIconMaterial"] {
+            display: none !important;
+        }
+        /* ---------------------------------- */
+
+        /* Hide default streamlit branding clutter */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        
+        /* Dataframe crisp styling */
+        .stDataFrame {
+            border: 2px solid #000000 !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- THE VISUAL FRONTEND ---
+
+# Minimal Header
+st.markdown('<div class="main-title">wa.blaster</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">simple, zero-subscription bulk utility</div>', unsafe_allow_html=True)
+
+# Configuration Field (Centered and clean)
+template_name = st.text_input("template id", value="salon_test_msg")
+
+st.space = st.markdown("<br>", unsafe_allow_html=True)
+
+# --- MOBILE CONTACT EXPORTER WIDGET ---
+st.write("📱 **mobile contact extractor**")
+
+EXTRACTOR_URL = "https://Uttamlabs.github.io/salon-blaster-app/extractor.html"
+
+st.markdown(f"""
+    <div style="background-color: #fafafa; padding: 25px 20px; border: 2px dashed #000000; border-radius: 16px; text-align: center; margin-bottom: 10px;">
+        <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 5px;">generate csv from phone</div>
+        <p style="font-size: 0.85rem; color: #666666; margin-top: 0; margin-bottom: 20px;">opens a secure tab to natively select contacts and download a formatted list.</p>
+        <a href="{EXTRACTOR_URL}" target="_blank" style="text-decoration: none;">
+            <button style="
+                background-color: #000000;
+                color: #ffffff;
+                border: 2px solid #000000;
+                border-radius: 9999px;
+                padding: 10px 24px;
+                font-family: 'JetBrains Mono', monospace;
+                font-weight: 500;
+                font-size: 14px;
+                cursor: pointer;
+            ">
+                extract contacts ↗
+            </button>
+        </a>
+    </div>
+""", unsafe_allow_html=True)
+
+st.space = st.markdown("<br>", unsafe_allow_html=True)
+st.write("📤 **upload & fire**")
+
+# FIX 1: Added a collapsed label to fix the Streamlit warning
+uploaded_file = st.file_uploader("Upload Contacts CSV", type=['csv'], label_visibility="collapsed")
+
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.write("📋 **batch preview**")
+    st.dataframe(df.head(), use_container_width=True)
+    
+    # Tiny sleek metric line
+    st.markdown(f"**total contacts loaded:** `{len(df)}` // **template:** `{template_name}`")
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # The Cobalt-style pill button
+    if st.button("execute blast"):
+        if "PASTE_YOUR_" in MY_ACCESS_TOKEN or "PASTE_YOUR_" in MY_PHONE_NUMBER_ID:
+            st.error("Credentials missing in code.")
+        else:
+            url = f"https://graph.facebook.com/v19.0/{MY_PHONE_NUMBER_ID}/messages"
+            headers = {
+                "Authorization": f"Bearer {MY_ACCESS_TOKEN}",
+                "Content-Type": "application/json"
+            }
+            
+            progress_bar = st.progress(0)
+            
+            # FIX 3: Initialized tracking variables
+            success_count = 0
+            failed_count = 0
+            failed_numbers = []
+            
+            for index, row in df.iterrows():
+                customer_name = str(row['Name'])
+                
+                # FIX 2: Check if column is named Phone or Number to prevent crashes
+                phone_number = str(row['Phone'] if 'Phone' in df.columns else row['Number'])
+                
+                payload = {
+                    "messaging_product": "whatsapp",
+                    "to": phone_number,
+                    "type": "template",
+                    "template": {
+                        "name": template_name,
+                        "language": {"code": "en"}, 
+                        "components": []
+                    }
+                }
+                
+                response = requests.post(url, headers=headers, json=payload)
+                if response.status_code == 200:
+                    success_count += 1
+                else:
+                    failed_count += 1
+                    failed_numbers.append(f"{customer_name} ({phone_number})")
+                    try:
+                        error_details = response.json().get('error', {}).get('message', 'Unknown Error')
+                    except:
+                        error_details = response.text
+                    st.error(f"❌ Failed sending to {customer_name}. Meta Error: {error_details}")
+                
+                progress_bar.progress(int(((index + 1) / len(df)) * 100))
+                time.sleep(0.4)
+                
+            # --- FINAL SUMMARY BLOCK ---
+            st.markdown("---")
+            st.markdown("### 📊 campaign summary")
+            
+            st.markdown(f"**Total Processed:** `{len(df)}` contacts")
+            st.success(f"✅ **Successful Deliveries:** `{success_count}`")
+            
+            if failed_count > 0:
+                st.error(f"❌ **Total Failures:** `{failed_count}`")
+                
+                # Display failed numbers
+                st.markdown("📋 **Failed Recipients List:**")
+                failed_text = "\n".join(failed_numbers)
+                st.text_area(label="Copy failed numbers from here:", value=failed_text, height=150)
+            else:
+                st.info("🎉 Perfect campaign! Zero failures.")
+                
+            st.toast(f"Blast complete: {success_count} sent, {failed_count} failed", icon="🚀")
