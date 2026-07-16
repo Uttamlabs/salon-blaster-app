@@ -126,8 +126,11 @@ st.markdown("""
 st.markdown('<div class="main-title">wa.blaster</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">simple, zero-subscription bulk utility</div>', unsafe_allow_html=True)
 
-# Configuration Field (Centered and clean)
+# Configuration Fields
 template_name = st.text_input("template id", value="salon_test_msg")
+
+# NEW OPTIONAL FIELD: Input image url if using image-based templates
+image_url = st.text_input("media header url (optional - leave empty if text-only)", value="", placeholder="https://example.com/flyer.jpg")
 
 st.space = st.markdown("<br>", unsafe_allow_html=True)
 
@@ -199,6 +202,21 @@ if uploaded_file is not None:
                 # FIX 2: Check if column is named Phone or Number to prevent crashes
                 phone_number = str(row['Phone'] if 'Phone' in df.columns else row['Number'])
                 
+                # Dynamic component construction for Media Headers
+                components_list = []
+                if image_url.strip():
+                    components_list.append({
+                        "type": "header",
+                        "parameters": [
+                            {
+                                "type": "image",
+                                "image": {
+                                    "link": image_url.strip()
+                                }
+                            }
+                        ]
+                    })
+                
                 payload = {
                     "messaging_product": "whatsapp",
                     "to": phone_number,
@@ -206,7 +224,7 @@ if uploaded_file is not None:
                     "template": {
                         "name": template_name,
                         "language": {"code": "en"}, 
-                        "components": []
+                        "components": components_list
                     }
                 }
                 
